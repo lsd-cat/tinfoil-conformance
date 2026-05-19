@@ -1,0 +1,17 @@
+id: 018-predicate-types-allowed-null-accepts
+stage: verify-sigstore
+title: |
+  policy.predicate_types_allowed=null means 'any', so the bundle accepts.
+spec_refs: ["5.5"]
+expects:
+  exit_code: 0
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Verifies that null in the allow-list is interpreted as 'any', not
+  as 'empty list = reject everything'. Catches off-by-default semantic
+  bugs in policy plumbing.

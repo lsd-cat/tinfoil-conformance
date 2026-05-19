@@ -1,0 +1,19 @@
+id: 017-subject-digest-uppercase-accepted
+stage: verify-sigstore
+title: |
+  expected_digest_sha256_hex in uppercase hex must still verify (SPEC §7.3 lowercase normalization).
+spec_refs: ["5.4", "7.3"]
+expects:
+  exit_code: 0
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  SPEC §7.3: all hex comparisons are lowercase-normalized. Pre-refactor
+  JS/Python/Go used strict !=/!== on digests and would fail this; Rust
+  already normalized. After the refactor both SDKs accept uppercase
+  expected_digest_sha256_hex. The output's subject_digest_sha256_hex
+  MUST be lowercase regardless of input case.

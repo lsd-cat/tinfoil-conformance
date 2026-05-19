@@ -1,0 +1,20 @@
+id: 013-predicate-type-not-allowed
+stage: verify-sigstore
+title: |
+  policy.predicate_types_allowed that excludes the bundle's actual predicate must reject.
+spec_refs: ["5.5"]
+expects:
+  exit_code: 10
+  rejection_code: "PREDICATE_TYPE_NOT_ALLOWED"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Same bundle as 001, but the policy allow-list explicitly does NOT
+  include the bundle's predicate type. This catches SDKs (looking at
+  you, pre-refactor Go) that deferred predicate-type pinning until
+  consumption — they would accept this bundle at verify time and only
+  fail later, defeating defense in depth.

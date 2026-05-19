@@ -1,0 +1,18 @@
+id: 020-trust-root-invalid-json
+stage: verify-sigstore
+title: |
+  trust_root_b64 that decodes to non-JSON must be rejected with TRUST_ROOT_INVALID.
+spec_refs: ["5.1"]
+expects:
+  exit_code: 10
+  rejection_code: "TRUST_ROOT_INVALID"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Trust root that doesn't even parse — both SDKs MUST reject at exit 10
+  (substantive verification failure, not exit 30 which is reserved for
+  input.json envelope-shape violations).

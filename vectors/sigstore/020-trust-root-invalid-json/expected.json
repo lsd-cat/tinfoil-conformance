@@ -1,0 +1,7 @@
+{
+  "stage": "verify-sigstore",
+  "accepted": false,
+  "rejection": {
+    "code": "TRUST_ROOT_INVALID"
+  }
+}

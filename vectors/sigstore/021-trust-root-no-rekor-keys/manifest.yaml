@@ -1,0 +1,27 @@
+id: 021-trust-root-no-rekor-keys
+stage: verify-sigstore
+title: |
+  Trust root with no Rekor keys must cause REKOR_KEY_NOT_TRUSTED or REKOR_INCLUSION_INVALID.
+spec_refs: ["5.1", "5.2"]
+expects:
+  exit_code: 10
+  rejection_code: ["REKOR_KEY_NOT_TRUSTED", "REKOR_INCLUSION_INVALID"]
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-trust-root-mutation
+notes: |
+  Bundle is the real production bundle from 001, signed cleanly.
+  Trust root has been emptied of Rekor public keys.
+  
+  SDKs classify the failure differently because upstream Sigstore libs
+  differ in granularity: tinfoil-rs surfaces REKOR_KEY_NOT_TRUSTED
+  (precise: 'no key matched this log id'); tinfoil-js via
+  @freedomofpress/sigstore-browser raises 'Invalid checkpoint
+  signature' (the first symptom — can't validate the checkpoint
+  signature against any key) and we classify it as
+  REKOR_INCLUSION_INVALID. The list form of `rejection_code` lets the
+  fixture accept either while keeping the divergence visible in the
+  result detail.

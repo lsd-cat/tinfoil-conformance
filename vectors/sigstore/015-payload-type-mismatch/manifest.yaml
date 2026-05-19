@@ -1,0 +1,19 @@
+id: 015-payload-type-mismatch
+stage: verify-sigstore
+title: |
+  policy.payload_type that does not match the DSSE envelope's payload_type must reject.
+spec_refs: ["5.4"]
+expects:
+  exit_code: 10
+  rejection_code: "PAYLOAD_TYPE_MISMATCH"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+  sigstore.policy_fields_configurable.payload_type: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  DSSE envelope is application/vnd.in-toto+json. Policy demands something
+  else. Both SDKs must reject with PAYLOAD_TYPE_MISMATCH (exact-string
+  match, no charset tolerance — see SPEC §5.4).

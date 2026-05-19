@@ -1,0 +1,17 @@
+id: 016-subject-digest-mismatch
+stage: verify-sigstore
+title: |
+  expected_digest_sha256_hex that doesn't match the bundle subject must reject.
+spec_refs: ["5.4"]
+expects:
+  exit_code: 10
+  rejection_code: "SUBJECT_DIGEST_MISMATCH"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Trivial but load-bearing: the digest binding from caller to attested
+  artifact MUST be checked. Provide a zeroed-out digest; both SDKs reject.

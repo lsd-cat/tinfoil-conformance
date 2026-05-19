@@ -1,0 +1,16 @@
+id: 019-in-toto-statement-types-allowed-null-accepts
+stage: verify-sigstore
+title: |
+  policy.in_toto_statement_types_allowed=null means 'any'.
+spec_refs: ["5.4"]
+expects:
+  exit_code: 0
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+  sigstore.policy_fields_configurable.in_toto_statement_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Symmetric to 018, but for the in-toto statement type allow-list.

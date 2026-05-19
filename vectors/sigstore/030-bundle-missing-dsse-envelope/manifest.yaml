@@ -1,0 +1,19 @@
+id: 030-bundle-missing-dsse-envelope
+stage: verify-sigstore
+title: |
+  Bundle without dsseEnvelope must reject with BUNDLE_MALFORMED.
+spec_refs: ["5.2"]
+expects:
+  exit_code: 10
+  rejection_code: "BUNDLE_MALFORMED"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-bundle-mutation
+notes: |
+  The dsseEnvelope key is removed from the bundle JSON. The signature
+  is not affected because what's signed is the payload INSIDE the
+  envelope; the envelope itself isn't covered. Both SDKs must reject
+  structurally with BUNDLE_MALFORMED before attempting any crypto.

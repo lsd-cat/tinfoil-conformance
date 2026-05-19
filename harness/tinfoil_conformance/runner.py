@@ -120,14 +120,24 @@ def run_fixture(
     if got_exit == EXIT_REJECT:
         want_code = expects.get("rejection_code")
         got_code = (got_output or {}).get("rejection", {}).get("code")
-        if want_code is not None and got_code != want_code:
-            return FixtureResult(
-                status="fail",
-                got_exit=got_exit,
-                got_output=got_output,
-                stderr_excerpt=stderr_excerpt,
-                reason=f"rejection.code={got_code!r}, want {want_code!r}",
+        if want_code is not None:
+            # `rejection_code` may be a single string OR a list of acceptable
+            # codes. The list form is for fixtures where the underlying
+            # taxonomy is genuinely ambiguous across implementations (e.g.
+            # @freedomofpress/sigstore-browser can't distinguish
+            # REKOR_KEY_NOT_TRUSTED from REKOR_INCLUSION_INVALID at its public
+            # surface). Each list use MUST be justified in manifest.notes.
+            acceptable = (
+                [want_code] if isinstance(want_code, str) else list(want_code)
             )
+            if got_code not in acceptable:
+                return FixtureResult(
+                    status="fail",
+                    got_exit=got_exit,
+                    got_output=got_output,
+                    stderr_excerpt=stderr_excerpt,
+                    reason=f"rejection.code={got_code!r}, want one of {acceptable!r}",
+                )
         return FixtureResult(status="pass", got_exit=got_exit, got_output=got_output)
 
     if got_exit == EXIT_ACCEPT:

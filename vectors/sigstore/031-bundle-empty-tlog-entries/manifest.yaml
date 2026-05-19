@@ -1,0 +1,20 @@
+id: 031-bundle-empty-tlog-entries
+stage: verify-sigstore
+title: |
+  Bundle with empty tlogEntries must reject with TLOG_COUNT_OUT_OF_RANGE.
+spec_refs: ["5.2"]
+expects:
+  exit_code: 10
+  rejection_code: "TLOG_COUNT_OUT_OF_RANGE"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-bundle-mutation
+notes: |
+  Bundle's tlogEntries is set to []. SPEC §5.2 #3 requires at least 1
+  valid Rekor log entry; this fixture pins TLOG_COUNT_OUT_OF_RANGE
+  as the canonical code. SDK divergence on this rejection code is a
+  real conformance signal worth investigating (e.g., sigstore-browser
+  may surface a more generic REKOR_INCLUSION_INVALID).
