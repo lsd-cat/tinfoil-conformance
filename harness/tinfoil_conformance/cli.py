@@ -42,7 +42,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir) / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir.mkdir(parents=True, exist_ok=True)
     write_results_json(out_dir / "results.json", sdks, results)
-    write_markdown(out_dir / "results.md", sdks, results)
+    write_markdown(out_dir / "results.md", sdks, results, vectors_root=args.vectors)
     latest = Path(args.output_dir) / "latest"
     if latest.is_symlink() or latest.exists():
         latest.unlink()

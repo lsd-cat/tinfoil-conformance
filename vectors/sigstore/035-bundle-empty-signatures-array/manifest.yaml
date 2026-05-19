@@ -1,0 +1,18 @@
+id: 035-bundle-empty-signatures-array
+stage: verify-sigstore
+title: |
+  Bundle whose DSSE signatures array is empty must reject.
+spec_refs: ["5.2"]
+expects:
+  exit_code: 10
+  rejection_code: ["DSSE_SIGNATURE_INVALID", "BUNDLE_MALFORMED"]
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-bundle-mutation
+notes: |
+  Either DSSE_SIGNATURE_INVALID (Rust rejects 'must have exactly 1
+  signature') or BUNDLE_MALFORMED (treat empty-array as structural)
+  is acceptable.

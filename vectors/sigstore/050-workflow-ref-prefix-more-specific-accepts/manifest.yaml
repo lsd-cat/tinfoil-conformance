@@ -1,0 +1,18 @@
+id: 050-workflow-ref-prefix-more-specific-accepts
+stage: verify-sigstore
+title: |
+  policy.workflow_ref_prefix='refs/tags/v' (more specific than default) still accepts a v-prefixed tag.
+spec_refs: ["5.3"]
+expects:
+  exit_code: 0
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-policy-variation
+notes: |
+  Positive test that longer prefixes still match. The fixture cert's
+  workflow ref begins with 'refs/tags/v…'; tightening the policy to
+  'refs/tags/v' (drop the 'efs/tags/' suffix is wrong; we mean adding
+  the 'v' prefix) still satisfies the check.

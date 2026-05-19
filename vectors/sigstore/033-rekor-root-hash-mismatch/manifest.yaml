@@ -1,0 +1,21 @@
+id: 033-rekor-root-hash-mismatch
+stage: verify-sigstore
+title: |
+  Bundle with rootHash that doesn't match the signed checkpoint must reject.
+spec_refs: ["5.2"]
+expects:
+  exit_code: 10
+  rejection_code: ["CHECKPOINT_ROOT_MISMATCH", "REKOR_INCLUSION_INVALID"]
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: "supported"
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-bundle-mutation
+notes: |
+  inclusionProof.rootHash is mutated so it no longer equals the root
+  hash inside the signed checkpoint envelope. The cleanest classification
+  is CHECKPOINT_ROOT_MISMATCH (Rust does this cross-check explicitly).
+  Sigstore-browser may instead surface this as REKOR_INCLUSION_INVALID
+  (its inclusion-proof verifier reconstructs to the wrong root). Both
+  are correct rejections; we accept either via the list form.

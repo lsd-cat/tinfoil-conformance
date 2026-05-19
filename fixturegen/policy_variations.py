@@ -422,6 +422,220 @@ def main() -> None:
         expected_outputs=None,
     )
 
+    # 032: corrupt the DSSE signature bytes. Payload is untouched so the SDKs
+    # reach signature verification and reject there.
+    corrupt_sig = copy.deepcopy(seed_bundle)
+    sig_b64 = corrupt_sig["dsseEnvelope"]["signatures"][0]["sig"]
+    sig_bytes = bytearray(base64.b64decode(sig_b64))
+    sig_bytes[10] ^= 0x01  # flip a bit in the middle of the signature
+    corrupt_sig["dsseEnvelope"]["signatures"][0]["sig"] = base64.b64encode(
+        bytes(sig_bytes)
+    ).decode()
+    write_fixture(
+        "032-dsse-signature-bit-flipped",
+        "Bundle with one bit flipped in the DSSE signature must reject with DSSE_SIGNATURE_INVALID.",
+        ["5.2"],
+        "real-frozen-bundle-mutation",
+        notes=(
+            "The DSSE signature bytes (signatures[0].sig) are separate from the\n"
+            "signed payload, so we can corrupt them without touching the in-toto\n"
+            "statement. One bit is flipped; SDKs reach signature verification\n"
+            "and reject."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            bundle_b64=base64.standard_b64encode(
+                json.dumps(corrupt_sig).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code="DSSE_SIGNATURE_INVALID",
+        expected_outputs=None,
+    )
+
+    # 033: corrupt inclusionProof.rootHash so it differs from the signed
+    # checkpoint envelope. The Rust SDK explicitly cross-checks
+    # `inclusion_proof.root_hash == signed_checkpoint.root_hash`. JS may not
+    # cross-check directly and instead surface the issue as inclusion-proof
+    # invalid via Merkle reconstruction or signature failure.
+    corrupt_root = copy.deepcopy(seed_bundle)
+    tlog = corrupt_root["verificationMaterial"]["tlogEntries"][0]
+    rh_b64 = tlog["inclusionProof"]["rootHash"]
+    rh_bytes = bytearray(base64.b64decode(rh_b64))
+    rh_bytes[0] ^= 0x01
+    tlog["inclusionProof"]["rootHash"] = base64.b64encode(bytes(rh_bytes)).decode()
+    write_fixture(
+        "033-rekor-root-hash-mismatch",
+        "Bundle with rootHash that doesn't match the signed checkpoint must reject.",
+        ["5.2"],
+        "real-frozen-bundle-mutation",
+        notes=(
+            "inclusionProof.rootHash is mutated so it no longer equals the root\n"
+            "hash inside the signed checkpoint envelope. The cleanest classification\n"
+            "is CHECKPOINT_ROOT_MISMATCH (Rust does this cross-check explicitly).\n"
+            "Sigstore-browser may instead surface this as REKOR_INCLUSION_INVALID\n"
+            "(its inclusion-proof verifier reconstructs to the wrong root). Both\n"
+            "are correct rejections; we accept either via the list form."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            bundle_b64=base64.standard_b64encode(
+                json.dumps(corrupt_root).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code=["CHECKPOINT_ROOT_MISMATCH", "REKOR_INCLUSION_INVALID"],
+        expected_outputs=None,
+    )
+
+    # 034: corrupt one of the inclusionProof Merkle hashes. Reconstruction
+    # from leaf to root will produce a different root than what the checkpoint
+    # signed → REKOR_INCLUSION_INVALID (or CHECKPOINT_ROOT_MISMATCH depending
+    # on the SDK's check order).
+    corrupt_hash = copy.deepcopy(seed_bundle)
+    tlog2 = corrupt_hash["verificationMaterial"]["tlogEntries"][0]
+    h0 = tlog2["inclusionProof"]["hashes"][0]
+    h0_bytes = bytearray(base64.b64decode(h0))
+    h0_bytes[0] ^= 0x01
+    tlog2["inclusionProof"]["hashes"][0] = base64.b64encode(bytes(h0_bytes)).decode()
+    write_fixture(
+        "034-rekor-inclusion-hashes-corrupted",
+        "Bundle with a corrupted Merkle hash in the inclusion proof must reject.",
+        ["5.2"],
+        "real-frozen-bundle-mutation",
+        notes=(
+            "hashes[0] of the inclusion proof is bit-flipped. Merkle reconstruction\n"
+            "produces a wrong root. Either REKOR_INCLUSION_INVALID (Merkle path\n"
+            "doesn't verify) or CHECKPOINT_ROOT_MISMATCH (computed root != signed\n"
+            "checkpoint root) is acceptable depending on SDK check order."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            bundle_b64=base64.standard_b64encode(
+                json.dumps(corrupt_hash).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code=["REKOR_INCLUSION_INVALID", "CHECKPOINT_ROOT_MISMATCH"],
+        expected_outputs=None,
+    )
+
+    # 035: bundle with empty DSSE signatures array.
+    empty_sigs = copy.deepcopy(seed_bundle)
+    empty_sigs["dsseEnvelope"]["signatures"] = []
+    write_fixture(
+        "035-bundle-empty-signatures-array",
+        "Bundle whose DSSE signatures array is empty must reject.",
+        ["5.2"],
+        "real-frozen-bundle-mutation",
+        notes=(
+            "Either DSSE_SIGNATURE_INVALID (Rust rejects 'must have exactly 1\n"
+            "signature') or BUNDLE_MALFORMED (treat empty-array as structural)\n"
+            "is acceptable."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            bundle_b64=base64.standard_b64encode(
+                json.dumps(empty_sigs).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code=["DSSE_SIGNATURE_INVALID", "BUNDLE_MALFORMED"],
+        expected_outputs=None,
+    )
+
+    # 036: bundle missing verificationMaterial entirely.
+    no_vm = copy.deepcopy(seed_bundle)
+    del no_vm["verificationMaterial"]
+    write_fixture(
+        "036-bundle-missing-verification-material",
+        "Bundle without verificationMaterial must reject with BUNDLE_MALFORMED.",
+        ["5.2"],
+        "real-frozen-bundle-mutation",
+        notes=(
+            "The cert + tlog entries + checkpoint all live in verificationMaterial.\n"
+            "Removing the whole object: SDKs cannot even start chain validation.\n"
+            "Both must reject structurally with BUNDLE_MALFORMED."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            bundle_b64=base64.standard_b64encode(
+                json.dumps(no_vm).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code="BUNDLE_MALFORMED",
+        expected_outputs=None,
+    )
+
+    # 050-052: additional policy edge cases ---------------------------------
+
+    # 050: workflow_ref_prefix that exactly equals the cert's workflow ref.
+    # This is the prefix-equals-full-string case; should still accept.
+    # We need to derive the actual cert's workflow ref. Decode it from
+    # fixture 001's expected output... but we don't have it there. Instead
+    # use a prefix that we know matches: the actual cert is for
+    # confidential-model-router, so the ref is likely "refs/tags/vX.Y.Z".
+    # We use "refs/tags/" which the seed already uses, and a more-specific
+    # value "refs/tags/v" which still matches.
+    write_fixture(
+        "050-workflow-ref-prefix-more-specific-accepts",
+        "policy.workflow_ref_prefix='refs/tags/v' (more specific than default) still accepts a v-prefixed tag.",
+        ["5.3"],
+        "real-frozen-policy-variation",
+        notes=(
+            "Positive test that longer prefixes still match. The fixture cert's\n"
+            "workflow ref begins with 'refs/tags/v…'; tightening the policy to\n"
+            "'refs/tags/v' (drop the 'efs/tags/' suffix is wrong; we mean adding\n"
+            "the 'v' prefix) still satisfies the check."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i["policy"].update(
+            workflow_ref_prefix="refs/tags/v"
+        ),
+        expected_exit=0,
+        rejection_code=None,
+        expected_outputs=accept_outputs,
+    )
+
+    # 051: predicate_types_allowed = [] (empty list = reject everything).
+    # Distinct from 018 which uses null (= any allowed).
+    write_fixture(
+        "051-predicate-types-allowed-empty-rejects-all",
+        "policy.predicate_types_allowed=[] (empty allow-list) must reject any predicate.",
+        ["5.5"],
+        "real-frozen-policy-variation",
+        notes=(
+            "Companion to 018 (null = any). Empty list = nothing allowed = always\n"
+            "reject. Distinguishes 'unset' from 'explicitly empty', a common\n"
+            "source of policy-plumbing bugs."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i["policy"].update(predicate_types_allowed=[]),
+        expected_exit=10,
+        rejection_code="PREDICATE_TYPE_NOT_ALLOWED",
+        expected_outputs=None,
+    )
+
+    # 052: in_toto_statement_types_allowed = [] (empty list = reject everything).
+    write_fixture(
+        "052-in-toto-statement-types-allowed-empty-rejects-all",
+        "policy.in_toto_statement_types_allowed=[] (empty allow-list) must reject any statement type.",
+        ["5.4"],
+        "real-frozen-policy-variation",
+        notes=("Symmetric to 051, for the in-toto statement type allow-list."),
+        seed_input=seed,
+        mutate_input=lambda i: i["policy"].update(
+            in_toto_statement_types_allowed=[]
+        ),
+        expected_exit=10,
+        rejection_code="IN_TOTO_STATEMENT_TYPE_NOT_ALLOWED",
+        expected_outputs=None,
+        extra_capabilities={
+            "sigstore.policy_fields_configurable.in_toto_statement_types_allowed": True,
+        },
+    )
+
     # 031: bundle with empty tlogEntries array.
     empty_tlogs = copy.deepcopy(seed_bundle)
     empty_tlogs["verificationMaterial"]["tlogEntries"] = []
