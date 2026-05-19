@@ -55,6 +55,11 @@ class FixtureSpec:
     # Number of SCTs to embed in the leaf cert. All signed by the same test
     # CT log key (we only have one). 0 → SCT_INSUFFICIENT; 2+ → SCT_DUPLICATE_LOG.
     num_scts: int = 1
+    # Number of tlog entries to include in verificationMaterial.tlogEntries.
+    # Each is generated in its own tree-size-1 Merkle log, all signed by the
+    # same Rekor key. Used to test SDKs that hardcode `exactly 1 tlog entry`
+    # vs SDKs that accept `>= 1`.
+    num_tlog_entries: int = 1
     integrated_time: datetime = field(
         default_factory=lambda: datetime(2026, 1, 1, 0, 2, tzinfo=timezone.utc)
     )
@@ -152,17 +157,25 @@ def build_bundle_and_trust_root(spec: FixtureSpec) -> GeneratedFixture:
         payload=spec.payload_bytes,
     )
 
-    # 7. Build the Rekor tree-size-1 entry.
-    entry = rekor.build_size_1_rekor_entry(
-        envelope=envelope,
-        leaf_cert_pem=leaf.cert_pem,
-        rekor_key=rekor_key,
-        integrated_time=spec.integrated_time,
-    )
+    # 7. Build N Rekor tree-size-1 entries (default 1). Each is a complete
+    # tree-size-1 inclusion proof signed by the same Rekor key; they differ
+    # only in integratedTime + logIndex so the cert/sig/payload bindings all
+    # still match the bundle's DSSE envelope.
+    entries = [
+        rekor.build_size_1_rekor_entry(
+            envelope=envelope,
+            leaf_cert_pem=leaf.cert_pem,
+            rekor_key=rekor_key,
+            integrated_time=spec.integrated_time
+            + __import__("datetime").timedelta(seconds=i),
+            log_index=i,
+        )
+        for i in range(spec.num_tlog_entries)
+    ]
 
     # 8. Assemble bundle + matching trust root.
     bundle = build_bundle(
-        leaf_cert_der=leaf.cert_der, envelope=envelope, rekor_entry=entry
+        leaf_cert_der=leaf.cert_der, envelope=envelope, rekor_entries=entries
     )
     tr = trust_root.build_trust_root(
         fulcio_root=root,

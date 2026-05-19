@@ -12,13 +12,14 @@ def build_bundle(
     *,
     leaf_cert_der: bytes,
     envelope: SignedEnvelope,
-    rekor_entry: RekorEntry,
+    rekor_entries: list[RekorEntry],
 ) -> dict:
     """Build a Sigstore v0.3 bundle dict ready to JSON-serialize.
 
-    Layout matches the production bundle shape consumed by both SDKs:
-    `verificationMaterial.certificate.rawBytes`, `tlogEntries[]`,
-    `dsseEnvelope.{payloadType, payload, signatures}`.
+    Accepts a list of Rekor entries. Real Sigstore bundles always carry
+    exactly one; supplying >1 lets the conformance suite expose SDKs that
+    differ on multi-entry handling (Rust hardcodes exactly-1; JS via
+    sigstore-browser accepts >=1).
     """
     cert_b64 = base64.standard_b64encode(leaf_cert_der).decode()
     return {
@@ -27,22 +28,23 @@ def build_bundle(
             "certificate": {"rawBytes": cert_b64},
             "tlogEntries": [
                 {
-                    "logIndex": str(rekor_entry.log_index),
-                    "logId": {"keyId": rekor_entry.log_id_b64},
+                    "logIndex": str(entry.log_index),
+                    "logId": {"keyId": entry.log_id_b64},
                     "kindVersion": {"kind": "dsse", "version": "0.0.1"},
-                    "integratedTime": str(rekor_entry.integrated_time),
+                    "integratedTime": str(entry.integrated_time),
                     "inclusionPromise": {
-                        "signedEntryTimestamp": rekor_entry.signed_entry_timestamp_b64
+                        "signedEntryTimestamp": entry.signed_entry_timestamp_b64
                     },
                     "inclusionProof": {
-                        "logIndex": str(rekor_entry.inclusion_proof_log_index),
-                        "rootHash": rekor_entry.inclusion_proof_root_hash_b64,
-                        "treeSize": str(rekor_entry.inclusion_proof_tree_size),
-                        "hashes": rekor_entry.inclusion_proof_hashes,
-                        "checkpoint": {"envelope": rekor_entry.checkpoint_envelope},
+                        "logIndex": str(entry.inclusion_proof_log_index),
+                        "rootHash": entry.inclusion_proof_root_hash_b64,
+                        "treeSize": str(entry.inclusion_proof_tree_size),
+                        "hashes": entry.inclusion_proof_hashes,
+                        "checkpoint": {"envelope": entry.checkpoint_envelope},
                     },
-                    "canonicalizedBody": rekor_entry.canonicalized_body_b64,
+                    "canonicalizedBody": entry.canonicalized_body_b64,
                 }
+                for entry in rekor_entries
             ],
         },
         "dsseEnvelope": {

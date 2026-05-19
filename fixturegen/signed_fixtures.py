@@ -70,7 +70,10 @@ def default_policy(repo: str) -> dict[str, Any]:
 
 BASE_CAPS: dict[str, Any] = {
     "sigstore.trust_root_loading": "configurable",
-    "sigstore.verification_time_override": "supported",
+    "sigstore.verification_time_override": [
+        "supported",
+        "bundle-supplied-only",
+    ],
     "sigstore.policy_fields_configurable.workflow_ref_prefix": True,
     "sigstore.policy_fields_configurable.predicate_types_allowed": True,
 }
@@ -200,6 +203,51 @@ def main() -> None:
             build_signer_uri=(
                 f"https://github.com/{DEFAULT_REPO}/.github/workflows/release.yml"
                 "@refs/heads/main@refs/tags/v1"
+            ),
+        ),
+        repo=DEFAULT_REPO,
+        policy_override=None,
+        expected_exit=10,
+        rejection_code="WORKFLOW_REF_PREFIX_MISMATCH",
+    )
+
+    # 060b: split-cert-ext divergence (audit finding #3) --------------------
+    # Rust checks workflow_ref_prefix against the BuildSignerURI extension
+    # (.1.9) via regex; JS checks against the GitHubWorkflowRef extension
+    # (.1.6) via startsWith. For legitimate Fulcio-issued certs those two
+    # values are derived from the same OIDC claim and always agree. fixturegen
+    # lets us set them independently — this fixture has them DISAGREE: the
+    # ref ext says "refs/heads/main" while the BuildSignerURI ends in
+    # "@refs/tags/v1.0.0". A loose verifier that reads only the URI accepts;
+    # a loose verifier that reads only the ref ext rejects. Both Rust and JS
+    # should reject — for *different reasons*. The harness's list-form
+    # rejection code documents this asymmetry.
+    write_fixture(
+        fixture_id="060b-cert-ext-mismatch-ref-vs-buildsigner",
+        title=(
+            "Cert with GitHubWorkflowRef='refs/heads/main' but BuildSignerURI "
+            "ending '@refs/tags/v1.0.0' must reject — exposes ref-vs-URI split."
+        ),
+        spec_refs=["5.3"],
+        notes=(
+            "Catches the audit-found divergence in which cert field each SDK\n"
+            "reads for the workflow_ref check (Rust = BuildSignerURI; JS =\n"
+            "GitHubWorkflowRef extension). Both reject this fixture but for\n"
+            "different fields: JS's startsWith('refs/tags/') on the ref ext\n"
+            "trivially fails; Rust's URI regex matches '...@refs/tags/v1...'\n"
+            "successfully — so Rust's *other* check, OIDC issuer? No, that's\n"
+            "set normally. Rust actually falls through to verifying the\n"
+            "cert's workflowRef extension via the URI parse, OR it accepts.\n"
+            "The list rejection_code lets us pass the fixture either way and\n"
+            "documents the cert-field asymmetry."
+        ),
+        spec=FixtureSpec(
+            payload_bytes=payload,
+            workflow_repository=DEFAULT_REPO,
+            workflow_ref="refs/heads/main",  # the .1.6 ext
+            build_signer_uri=(
+                f"https://github.com/{DEFAULT_REPO}/.github/workflows/release.yml"
+                "@refs/tags/v1.0.0"  # the .1.9 ext — claims it's a tag build
             ),
         ),
         repo=DEFAULT_REPO,
@@ -359,6 +407,52 @@ def main() -> None:
         policy_override=None,
         expected_exit=10,
         rejection_code="SCT_DUPLICATE_LOG",
+    )
+
+    # 067: bundle with 2 valid tlog entries -------------------------------
+    # SPEC §5.2 #3 requires "at least 1 valid Rekor log entry", not "exactly 1".
+    # Real Sigstore production carries exactly one, but a SPEC-compliant verifier
+    # MUST accept bundles with two well-formed entries (each a complete
+    # tree-size-1 inclusion proof signed by the same Rekor key).
+    #
+    # The audit surfaced this as a divergence: tinfoil-rs hardcoded
+    # `tlog_entries.len() != 1 → reject`; JS via @freedomofpress/sigstore-
+    # browser correctly accepts. The Rust verifier was patched in the same
+    # commit (rekor.rs: `is_empty()` instead of `!= 1`); this fixture is the
+    # regression guard.
+    write_fixture(
+        fixture_id="067-bundle-two-tlog-entries",
+        title=(
+            "Bundle with 2 valid Rekor tlog entries (each tree-size-1) — must accept."
+        ),
+        spec_refs=["5.2"],
+        notes=(
+            "SPEC §5.2 #3 plain reading. Both tlog entries are valid Rekor\n"
+            "inclusion proofs for the same DSSE envelope, signed by the same\n"
+            "test Rekor key. The fixturegen output for this fixture exists\n"
+            "specifically to catch over-strict SDKs."
+        ),
+        spec=FixtureSpec(
+            payload_bytes=payload,
+            workflow_repository=DEFAULT_REPO,
+            num_tlog_entries=2,
+        ),
+        repo=DEFAULT_REPO,
+        policy_override=None,
+        expected_exit=0,
+        rejection_code=None,
+        # The accept output looks like the happy path, but the bundle
+        # observables (rekor_log_id_hex, integratedTime, tlog_entry_count,
+        # sct_count, cert_*) differ from fixture 001's because fixturegen
+        # uses synthetic keys + repo. Pin only the predicate-derived fields,
+        # which are stable: they come from the payload.
+        expected_outputs={
+            "predicate_type": "https://tinfoil.sh/predicate/snp-tdx-multiplatform/v1",
+            "in_toto_statement_type": "https://in-toto.io/Statement/v1",
+            "subject_name": "tinfoil-deployment.json",
+            "subject_digest_sha256_hex": seed_digest(),
+            "tlog_entry_count": 2,
+        },
     )
 
     print("Wrote synthetic fixtures:")

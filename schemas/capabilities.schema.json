@@ -45,8 +45,8 @@
           "description": "Whether the SDK accepts an inline trust root, or only uses its embedded copy."
         },
         "verification_time_override": {
-          "enum": ["supported", "system-clock-only"],
-          "description": "Whether the SDK accepts policy.verification_time_unix instead of using the system clock."
+          "enum": ["supported", "system-clock-only", "bundle-supplied-only"],
+          "description": "Where the verifier sources time-of-verification from: 'supported' (uses policy.verification_time_unix); 'system-clock-only' (Date.now() — fixtures rot); 'bundle-supplied-only' (cert NotBefore / Rekor integratedTime from the bundle, hermetic on system clock but caller's verification_time_unix is ignored)."
         },
         "policy_fields_configurable": {
           "type": "object",

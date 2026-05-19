@@ -13,6 +13,13 @@
         "a7ed1bcbe696222ecf956f2c78a3b29fcc8ca24831a4751b58f5858d537fbf29666e7949e8402599c96f41a80f7fe253",
         "ddce36c7bebf841b3a4ff0c8c2df63869f102b74904063efc24244bf5b983b44e87f610c73f963bd3e859014903508c3"
       ]
-    }
+    },
+    "cert_oidc_issuer": "https://token.actions.githubusercontent.com",
+    "cert_workflow_repository": "tinfoilsh/confidential-model-router",
+    "cert_workflow_signer_uri": "https://github.com/tinfoilsh/confidential-model-router/.github/workflows/build.yml@refs/tags/v0.0.38",
+    "rekor_log_id_hex": "c0d23d6ad406973f9559f3ba2d1ca01f84147d8ffc5b8445c224f98b9591801d",
+    "rekor_integrated_time_unix": 1769121722,
+    "tlog_entry_count": 1,
+    "sct_count": 1
   }
 }

@@ -33,7 +33,13 @@ SEED = VECTORS_DIR / "001-happy-path-snp-tdx-multiplatform"
 # additional configurable fields add to this list.
 BASE_CAPABILITIES = {
     "sigstore.trust_root_loading": "configurable",
-    "sigstore.verification_time_override": "supported",
+    # Accept any hermetic-time SDK — both "supported" (consumes our supplied
+    # time) and "bundle-supplied-only" (uses bundle's cert NotBefore) survive
+    # cert expiry over fixture lifetime. "system-clock-only" rots.
+    "sigstore.verification_time_override": [
+        "supported",
+        "bundle-supplied-only",
+    ],
     "sigstore.policy_fields_configurable.workflow_ref_prefix": True,
     "sigstore.policy_fields_configurable.predicate_types_allowed": True,
 }

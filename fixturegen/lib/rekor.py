@@ -185,7 +185,9 @@ def build_size_1_rekor_entry(
         signed_entry_timestamp_b64=set_b64,
         inclusion_proof_root_hash_b64=base64.standard_b64encode(leaf).decode(),
         inclusion_proof_tree_size=1,
-        inclusion_proof_log_index=log_index,
+        # For a tree-size-1 Merkle log there's exactly one leaf at index 0;
+        # the bundle-level `log_index` is just metadata.
+        inclusion_proof_log_index=0,
         inclusion_proof_hashes=[],
         checkpoint_envelope=checkpoint,
     )

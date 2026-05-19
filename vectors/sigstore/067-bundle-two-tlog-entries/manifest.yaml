@@ -1,11 +1,10 @@
-id: 065-cert-no-scts
+id: 067-bundle-two-tlog-entries
 stage: verify-sigstore
 title: |
-  Leaf cert with zero embedded SCTs must reject with SCT_INSUFFICIENT.
+  Bundle with 2 valid Rekor tlog entries (each tree-size-1) — must accept.
 spec_refs: ["5.2"]
 expects:
-  exit_code: 10
-  rejection_code: "SCT_INSUFFICIENT"
+  exit_code: 0
 required_capabilities:
   sigstore.trust_root_loading: "configurable"
   sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
@@ -13,5 +12,7 @@ required_capabilities:
   sigstore.policy_fields_configurable.predicate_types_allowed: true
 fixture_kind: synthetic
 notes: |
-  SPEC §5.2 #4 requires at least 1 valid SCT. fixturegen embeds an
-  empty SCT list extension; both SDKs must reject.
+  SPEC §5.2 #3 plain reading. Both tlog entries are valid Rekor
+  inclusion proofs for the same DSSE envelope, signed by the same
+  test Rekor key. The fixturegen output for this fixture exists
+  specifically to catch over-strict SDKs.

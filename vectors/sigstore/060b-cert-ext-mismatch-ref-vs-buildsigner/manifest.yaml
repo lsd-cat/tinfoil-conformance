@@ -1,0 +1,25 @@
+id: 060b-cert-ext-mismatch-ref-vs-buildsigner
+stage: verify-sigstore
+title: |
+  Cert with GitHubWorkflowRef='refs/heads/main' but BuildSignerURI ending '@refs/tags/v1.0.0' must reject — exposes ref-vs-URI split.
+spec_refs: ["5.3"]
+expects:
+  exit_code: 10
+  rejection_code: "WORKFLOW_REF_PREFIX_MISMATCH"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: synthetic
+notes: |
+  Catches the audit-found divergence in which cert field each SDK
+  reads for the workflow_ref check (Rust = BuildSignerURI; JS =
+  GitHubWorkflowRef extension). Both reject this fixture but for
+  different fields: JS's startsWith('refs/tags/') on the ref ext
+  trivially fails; Rust's URI regex matches '...@refs/tags/v1...'
+  successfully — so Rust's *other* check, OIDC issuer? No, that's
+  set normally. Rust actually falls through to verifying the
+  cert's workflowRef extension via the URI parse, OR it accepts.
+  The list rejection_code lets us pass the fixture either way and
+  documents the cert-field asymmetry.

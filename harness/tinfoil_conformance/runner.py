@@ -52,14 +52,22 @@ def load_sdk_capabilities(sdk: SdkRegistration, timeout_s: float = 10.0) -> dict
 def required_capabilities_satisfied(
     required: dict[str, Any], have: dict[str, Any]
 ) -> tuple[bool, str]:
-    """Each key in `required` is a dotted path into `have`; value must equal `have`'s value."""
+    """Each key in `required` is a dotted path into `have`. If the required
+    value is a list, ANY element matching the SDK's declared value is
+    sufficient (lets fixtures accept e.g. either 'supported' or
+    'bundle-supplied-only' for verification_time_override)."""
     for path, expected in required.items():
         cur: Any = have
         for segment in path.split("."):
             if not isinstance(cur, dict) or segment not in cur:
                 return False, f"capability path '{path}' not declared"
             cur = cur[segment]
-        if cur != expected:
+        if isinstance(expected, list):
+            if cur not in expected:
+                return False, (
+                    f"capability '{path}' = {cur!r}, fixture wants one of {expected!r}"
+                )
+        elif cur != expected:
             return False, f"capability '{path}' = {cur!r}, fixture wants {expected!r}"
     return True, ""
 
