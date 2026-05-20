@@ -2,6 +2,9 @@
   "stage": "verify-sigstore",
   "accepted": false,
   "rejection": {
-    "code": "SUBJECT_MISSING"
+    "code": [
+      "SUBJECT_MISSING",
+      "SUBJECT_DIGEST_MISMATCH"
+    ]
   }
 }

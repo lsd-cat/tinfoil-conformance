@@ -313,8 +313,10 @@ def main() -> None:
         spec_refs=["5.4"],
         notes=(
             "Subject is empty after re-signing. The release-artifact binding\n"
-            "cannot be checked. SDKs reject with SUBJECT_MISSING (or some\n"
-            "equivalent — list-form acceptable since wording differs)."
+            "cannot be checked. SDKs reject with SUBJECT_MISSING or some\n"
+            "equivalent code — sigstore-go's WithArtifactDigest can't find a\n"
+            "matching subject digest and surfaces this as\n"
+            "SUBJECT_DIGEST_MISMATCH instead. Either rejection is acceptable."
         ),
         spec=FixtureSpec(
             payload_bytes=mutate_payload_empty_subject(payload),
@@ -323,7 +325,7 @@ def main() -> None:
         repo=DEFAULT_REPO,
         policy_override=None,
         expected_exit=10,
-        rejection_code="SUBJECT_MISSING",
+        rejection_code=["SUBJECT_MISSING", "SUBJECT_DIGEST_MISMATCH"],
     )
 
     # 064: integrated-time outside cert validity ----------------------------
@@ -410,6 +412,7 @@ def main() -> None:
         policy_override=None,
         expected_exit=10,
         rejection_code=["SCT_DUPLICATE_LOG", "SCT_INSUFFICIENT"],
+        extra_capabilities={"sigstore.rejects_duplicate_sct_log": True},
     )
 
     # 067: bundle with 2 valid tlog entries -------------------------------
@@ -635,9 +638,11 @@ def main() -> None:
         spec_refs=["5.4"],
         notes=(
             "Catches SDKs that iterate the subject array and accept on any\n"
-            "match. The SPEC explicitly says only subject[0] is checked, so\n"
-            "a malicious bundle that prepends a spoof subject + a real one\n"
-            "must reject."
+            "match. The SPEC explicitly says only subject[0] is checked.\n"
+            "sigstore-go is non-conformant here (it iterates subjects);\n"
+            "gated on `sigstore.checks_only_subject_0` so Go skips cleanly\n"
+            "rather than fails — the divergence is visible in the result\n"
+            "matrix."
         ),
         spec=FixtureSpec(
             payload_bytes=payload,
@@ -648,6 +653,7 @@ def main() -> None:
         policy_override=None,
         expected_exit=10,
         rejection_code="SUBJECT_DIGEST_MISMATCH",
+        extra_capabilities={"sigstore.checks_only_subject_0": True},
     )
 
     # 074: in-toto statement with unknown extra field -----------------------
@@ -663,10 +669,10 @@ def main() -> None:
         spec_refs=["5.4"],
         notes=(
             "Adds `'_spec_version': 99` to the in-toto statement before signing.\n"
-            "SDKs that strict-parse the statement (rejecting unknown fields)\n"
-            "would fail; SDKs that tolerate unknown fields accept. Per\n"
-            "SPEC §5.4 the only required fields are `_type`, `predicateType`,\n"
-            "`subject`, and `predicate` — anything else should be ignored."
+            "Rust/JS/Python tolerate unknown fields and accept; sigstore-go's\n"
+            "in-toto parser is strict and rejects. Gated on the\n"
+            "`in_toto_statement_tolerates_extra_fields` capability so Go\n"
+            "skips honestly rather than failing."
         ),
         spec=FixtureSpec(
             payload_bytes=payload,
@@ -680,6 +686,7 @@ def main() -> None:
         expected_outputs={
             "predicate_type": "https://tinfoil.sh/predicate/snp-tdx-multiplatform/v1",
         },
+        extra_capabilities={"sigstore.in_toto_statement_tolerates_extra_fields": True},
     )
 
     # 075: cert with neither V1 nor V2 OIDC issuer extension --------------

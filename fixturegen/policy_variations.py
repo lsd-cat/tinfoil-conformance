@@ -366,7 +366,21 @@ def main() -> None:
             ).decode()
         ),
         expected_exit=10,
-        rejection_code=["REKOR_KEY_NOT_TRUSTED", "REKOR_INCLUSION_INVALID"],
+        # Four SDKs, four different angles on the same root cause ("no Rekor
+        # key endorses the tlog entry's log_id"):
+        #   * tinfoil-rs    : REKOR_KEY_NOT_TRUSTED (precise: "no key for log")
+        #   * tinfoil-js    : REKOR_INCLUSION_INVALID (sigstore-browser
+        #                     surfaces as "Invalid checkpoint signature")
+        #   * tinfoil-python: REKOR_KEY_NOT_TRUSTED (via internal IndexError)
+        #   * tinfoil-go    : TLOG_COUNT_OUT_OF_RANGE (sigstore-go counts
+        #                     verified entries; 0 < 1 → reject)
+        # All are honest rejections. The list captures the genuine taxonomy
+        # ambiguity inherent in the upstream-lib differences.
+        rejection_code=[
+            "REKOR_KEY_NOT_TRUSTED",
+            "REKOR_INCLUSION_INVALID",
+            "TLOG_COUNT_OUT_OF_RANGE",
+        ],
         expected_outputs=None,
     )
 

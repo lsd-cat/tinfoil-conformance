@@ -5,7 +5,7 @@ title: |
 spec_refs: ["5.4"]
 expects:
   exit_code: 10
-  rejection_code: "SUBJECT_MISSING"
+  rejection_code: ["SUBJECT_MISSING", "SUBJECT_DIGEST_MISMATCH"]
 required_capabilities:
   sigstore.trust_root_loading: "configurable"
   sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
@@ -14,5 +14,7 @@ required_capabilities:
 fixture_kind: synthetic
 notes: |
   Subject is empty after re-signing. The release-artifact binding
-  cannot be checked. SDKs reject with SUBJECT_MISSING (or some
-  equivalent — list-form acceptable since wording differs).
+  cannot be checked. SDKs reject with SUBJECT_MISSING or some
+  equivalent code — sigstore-go's WithArtifactDigest can't find a
+  matching subject digest and surfaces this as
+  SUBJECT_DIGEST_MISMATCH instead. Either rejection is acceptable.

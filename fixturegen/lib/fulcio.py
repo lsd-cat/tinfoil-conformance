@@ -228,6 +228,18 @@ def _build_leaf(
             x509.AuthorityKeyIdentifier.from_issuer_public_key(root.key.public),
             critical=False,
         )
+        # Subject Alternative Name as a URI matching the BuildSignerURI. Real
+        # Fulcio certs use an otherName SAN with a custom OID, but a URI SAN
+        # is much simpler to emit and sigstore-go's SummarizeCertificate
+        # accepts URIs, emails, or otherName equally. The other SDKs read the
+        # workflow identity from the .1.5/.1.6/.1.9 Fulcio extensions
+        # directly so the SAN shape doesn't affect them.
+        .add_extension(
+            x509.SubjectAlternativeName([
+                x509.UniformResourceIdentifier(spec.build_signer_uri),
+            ]),
+            critical=False,
+        )
     )
     # Fulcio extensions — emitted conditionally per LeafCertSpec flags. The
     # default path (everything True) reproduces a normal Fulcio leaf cert;

@@ -151,8 +151,11 @@ def build_size_1_rekor_entry(
     envelope: SignedEnvelope,
     leaf_cert_pem: str,
     rekor_key: P256KeyPair,
-    rekor_origin: str = "tinfoil-conformance",
-    rekor_signer_name: str = "tinfoil-conformance",
+    # Origin and signer name MUST match the hostname of the trust root's
+    # tlog baseUrl — sigstore-go's NewNoteVerifier derives the expected
+    # signer name from baseUrl.Hostname() and rejects mismatches.
+    rekor_origin: str = "tinfoil-conformance.test",
+    rekor_signer_name: str = "tinfoil-conformance.test",
     log_index: int = 0,
     integrated_time: datetime,
 ) -> RekorEntry:

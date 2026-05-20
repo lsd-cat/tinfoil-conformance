@@ -11,6 +11,7 @@ required_capabilities:
   sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
   sigstore.policy_fields_configurable.workflow_ref_prefix: true
   sigstore.policy_fields_configurable.predicate_types_allowed: true
+  sigstore.rejects_duplicate_sct_log: true
 fixture_kind: synthetic
 notes: |
   Both SCTs are signed by the same fixturegen CT log key (same log_id).

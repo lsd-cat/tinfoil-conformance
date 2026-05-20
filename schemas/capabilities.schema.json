@@ -84,6 +84,18 @@
         "scts_count_distinguish_missing_vs_duplicate": {
           "type": "boolean",
           "description": "True if the SDK distinguishes SCT_INSUFFICIENT (zero SCTs) from SCT_DUPLICATE_LOG (two SCTs from same log) at the rejection-code level. sigstore-python collapses both into the same 'expected one certificate timestamp' error and can't tell them apart."
+        },
+        "rejects_duplicate_sct_log": {
+          "type": "boolean",
+          "description": "True if the SDK rejects bundles where the leaf cert carries two SCTs from the same CT log id. sigstore-go silently accepts duplicate SCTs."
+        },
+        "checks_only_subject_0": {
+          "type": "boolean",
+          "description": "True if the SDK only checks subject[0].digest.sha256 (SPEC §5.4 wording 'If the subject array contains multiple entries, only the first entry is checked'). sigstore-go iterates ALL subjects when matching the artifact digest, accepting bundles where subject[0] is bad but subject[1] matches."
+        },
+        "in_toto_statement_tolerates_extra_fields": {
+          "type": "boolean",
+          "description": "True if the SDK tolerates unknown top-level fields on the in-toto statement (forward-compat). sigstore-go's strict in-toto parser rejects unknown fields."
         }
       }
     },
