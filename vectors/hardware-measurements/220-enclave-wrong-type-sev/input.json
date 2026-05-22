@@ -1,0 +1,16 @@
+{
+  "schema_version": "1",
+  "enclave_measurement": {
+    "type": "https://tinfoil.sh/predicate/sev-snp-guest/v2",
+    "registers": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ]
+  },
+  "hardware_measurements": [
+    {
+      "id": "platform-a@dig",
+      "mrtd": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "rtmr0": "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ]
+}

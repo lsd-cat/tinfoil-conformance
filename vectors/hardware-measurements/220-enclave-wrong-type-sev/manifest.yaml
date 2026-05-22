@@ -1,0 +1,14 @@
+id: 220-enclave-wrong-type-sev
+stage: verify-hardware-measurements
+title: |
+  enclave_measurement.type is SEV not TDX → reject as type-invalid.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: "ENCLAVE_MEASUREMENT_TYPE_INVALID"
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §6.3 step 1: 'The enclave measurement MUST be of type
+  TdxGuestV2 with exactly 5 registers.' Hardware-measurement
+  matching is TDX-only (§6 first paragraph).

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinfoil.sh/conformance/schemas/verify-hardware-measurements.output.schema.json",
+  "title": "verify-hardware-measurements output",
+  "description": "stdout JSON produced by `tinfoil-conformance verify-hardware-measurements`. SPEC §6 verdict.",
+  "type": "object",
+  "required": ["stage", "accepted"],
+  "additionalProperties": false,
+  "properties": {
+    "stage": {"const": "verify-hardware-measurements"},
+    "accepted": {"type": "boolean"},
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matched_id", "matched_mrtd", "matched_rtmr0"],
+      "properties": {
+        "matched_id": {"type": "string", "description": "id of the hardware measurement entry that matched (first match per SPEC §6.3 step 3)."},
+        "matched_mrtd": {"type": "string"},
+        "matched_rtmr0": {"type": "string"}
+      }
+    },
+    "rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "enum": [
+            "HARDWARE_NO_MATCH",
+            "ENCLAVE_MEASUREMENT_TYPE_INVALID",
+            "ENCLAVE_REGISTER_COUNT_INVALID"
+          ],
+          "description": "SPEC-anchored rejection. HARDWARE_NO_MATCH: no hw entry matches (covers empty hw_list per §6.3 step 4). ENCLAVE_MEASUREMENT_TYPE_INVALID: enclave_measurement.type is not TdxGuestV2 (§6.3 step 1). ENCLAVE_REGISTER_COUNT_INVALID: TDX type but register count != 5 (§6.3 step 1)."
+        },
+        "spec_ref": {"type": "string"}
+      }
+    }
+  },
+  "oneOf": [
+    {"properties": {"accepted": {"const": true}, "outputs": true}, "required": ["outputs"]},
+    {"properties": {"accepted": {"const": false}, "rejection": true}, "required": ["rejection"]}
+  ]
+}

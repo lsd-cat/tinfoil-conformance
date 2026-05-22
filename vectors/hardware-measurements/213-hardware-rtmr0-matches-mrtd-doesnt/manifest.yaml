@@ -1,0 +1,12 @@
+id: 213-hardware-rtmr0-matches-mrtd-doesnt
+stage: verify-hardware-measurements
+title: |
+  RTMR0 matches but MRTD differs → reject.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: "HARDWARE_NO_MATCH"
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  Symmetric to 212: catches an SDK that only checks RTMR0.

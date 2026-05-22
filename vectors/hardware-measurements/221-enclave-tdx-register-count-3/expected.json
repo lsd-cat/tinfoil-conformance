@@ -1,0 +1,10 @@
+{
+  "stage": "verify-hardware-measurements",
+  "accepted": false,
+  "rejection": {
+    "code": [
+      "ENCLAVE_REGISTER_COUNT_INVALID",
+      "HARDWARE_NO_MATCH"
+    ]
+  }
+}

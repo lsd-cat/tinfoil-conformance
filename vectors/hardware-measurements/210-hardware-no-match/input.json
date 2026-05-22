@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "enclave_measurement": {
+    "type": "https://tinfoil.sh/predicate/tdx-guest/v2",
+    "registers": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+      "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    ]
+  },
+  "hardware_measurements": [
+    {
+      "id": "platform-b@dig",
+      "mrtd": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "rtmr0": "222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "id": "platform-c@dig",
+      "mrtd": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "rtmr0": "333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+id: 230-hardware-case-normalization
+stage: verify-hardware-measurements
+title: |
+  Uppercase MRTD/RTMR0 in either side must match — §7.3 lowercase normalization.
+spec_refs: ["6.3", "7.3"]
+expects:
+  exit_code: 0
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §7.3 'Implementations MUST normalize register values to
+  lowercase before any comparison'. enclave has uppercase MRTD,
+  hw has uppercase RTMR0 — both must normalize to lowercase
+  before the equality check.

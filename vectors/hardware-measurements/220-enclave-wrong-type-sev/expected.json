@@ -1,0 +1,7 @@
+{
+  "stage": "verify-hardware-measurements",
+  "accepted": false,
+  "rejection": {
+    "code": "ENCLAVE_MEASUREMENT_TYPE_INVALID"
+  }
+}

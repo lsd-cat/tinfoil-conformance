@@ -1,0 +1,12 @@
+id: 222-enclave-tdx-empty-registers
+stage: verify-hardware-measurements
+title: |
+  TDX enclave_measurement with 0 registers → reject.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: "ENCLAVE_REGISTER_COUNT_INVALID"
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  Edge of 221: no registers at all.

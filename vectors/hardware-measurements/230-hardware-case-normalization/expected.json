@@ -1,0 +1,9 @@
+{
+  "stage": "verify-hardware-measurements",
+  "accepted": true,
+  "outputs": {
+    "matched_id": "platform-mixed-case@dig",
+    "matched_mrtd": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "matched_rtmr0": "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+  }
+}

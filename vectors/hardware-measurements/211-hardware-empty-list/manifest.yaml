@@ -1,0 +1,14 @@
+id: 211-hardware-empty-list
+stage: verify-hardware-measurements
+title: |
+  Empty hw list — trivially no match → reject.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: "HARDWARE_NO_MATCH"
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  Empty list trivially has no match per §6.3 step 3, fails at step 4.
+  Catches an SDK that returns the zero-value HardwareMeasurement struct
+  instead of erroring on an empty input list.

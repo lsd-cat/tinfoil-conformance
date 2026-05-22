@@ -1,0 +1,13 @@
+id: 221-enclave-tdx-register-count-3
+stage: verify-hardware-measurements
+title: |
+  TDX enclave_measurement with only 3 registers → reject.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: ["ENCLAVE_REGISTER_COUNT_INVALID", "HARDWARE_NO_MATCH"]
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §6.3 step 1 requires exactly 5 registers. Anything else
+  is rejected before the iteration starts.

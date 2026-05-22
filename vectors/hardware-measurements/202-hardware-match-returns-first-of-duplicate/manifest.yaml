@@ -1,0 +1,14 @@
+id: 202-hardware-match-returns-first-of-duplicate
+stage: verify-hardware-measurements
+title: |
+  Two hw entries with identical MRTD+RTMR0 — first match returned per §6.3.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 0
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §6.3 step 3 is 'first match' — when two entries are equivalent
+  the SDK MUST return the one with the lower index. Fixture has two
+  entries with the same MRTD+RTMR0 but different ids; expects the
+  first id.

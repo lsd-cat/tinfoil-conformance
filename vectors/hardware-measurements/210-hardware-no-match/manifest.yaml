@@ -1,0 +1,12 @@
+id: 210-hardware-no-match
+stage: verify-hardware-measurements
+title: |
+  No hw entry matches → HARDWARE_NO_MATCH.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 10
+  rejection_code: "HARDWARE_NO_MATCH"
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §6.3 step 4: 'If no match is found, verification MUST fail.'

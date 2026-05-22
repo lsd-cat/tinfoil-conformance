@@ -1,0 +1,9 @@
+{
+  "stage": "verify-hardware-measurements",
+  "accepted": true,
+  "outputs": {
+    "matched_id": "platform-b@dig",
+    "matched_mrtd": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "matched_rtmr0": "222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222"
+  }
+}

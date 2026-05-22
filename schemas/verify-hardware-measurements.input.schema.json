@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinfoil.sh/conformance/schemas/verify-hardware-measurements.input.schema.json",
+  "title": "verify-hardware-measurements input",
+  "description": "Input piped on stdin to `tinfoil-conformance verify-hardware-measurements`. Covers SPEC §6 TDX hardware-measurement matching.",
+  "type": "object",
+  "required": ["schema_version", "enclave_measurement", "hardware_measurements"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1"},
+    "enclave_measurement": {
+      "type": "object",
+      "required": ["type", "registers"],
+      "additionalProperties": false,
+      "description": "Enclave TDX measurement. SPEC §6.3 requires type=TdxGuestV2 with exactly 5 registers (MRTD, RTMR0, RTMR1, RTMR2, RTMR3).",
+      "properties": {
+        "type": {"type": "string"},
+        "registers": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "hardware_measurements": {
+      "type": "array",
+      "description": "Candidate hardware measurements. SPEC §6.3 iterates and returns the first match where hw.mrtd == enclave.registers[0] AND hw.rtmr0 == enclave.registers[1].",
+      "items": {
+        "type": "object",
+        "required": ["id", "mrtd", "rtmr0"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "description": "Platform identifier (per SPEC §5.5.2: `{platform_id}@{digest}`)."},
+          "mrtd": {"type": "string"},
+          "rtmr0": {"type": "string"}
+        }
+      }
+    }
+  }
+}

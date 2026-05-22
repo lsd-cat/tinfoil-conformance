@@ -1,0 +1,11 @@
+id: 200-hardware-match-single
+stage: verify-hardware-measurements
+title: |
+  Single hardware measurement matching the enclave's MRTD+RTMR0 → accept.
+spec_refs: ["6.3"]
+expects:
+  exit_code: 0
+required_capabilities: {}
+fixture_kind: synthetic
+notes: |
+  SPEC §6.3 happy path with a 1-entry hw list.
