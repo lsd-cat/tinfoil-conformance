@@ -1,0 +1,12 @@
+{
+  "stage": "verify-sigstore",
+  "accepted": false,
+  "rejection": {
+    "code": [
+      "SCT_INSUFFICIENT",
+      "FULCIO_CHAIN_INVALID",
+      "BUNDLE_MALFORMED",
+      "TRUST_ROOT_INVALID"
+    ]
+  }
+}

@@ -170,6 +170,25 @@ def mutate_payload_remove_rtmr2(payload: bytes) -> bytes:
     return json.dumps(p, separators=(",", ":"), sort_keys=True).encode()
 
 
+def mutate_payload_remove_snp_measurement(payload: bytes) -> bytes:
+    """Strip snp_measurement from the predicate."""
+    p = json.loads(payload.decode())
+    pred = copy.deepcopy(p["predicate"])
+    pred.pop("snp_measurement", None)
+    p["predicate"] = pred
+    return json.dumps(p, separators=(",", ":"), sort_keys=True).encode()
+
+
+def mutate_payload_remove_rtmr1(payload: bytes) -> bytes:
+    """Strip rtmr1 from tdx_measurement."""
+    p = json.loads(payload.decode())
+    pred = copy.deepcopy(p["predicate"])
+    if "tdx_measurement" in pred and "rtmr1" in pred["tdx_measurement"]:
+        del pred["tdx_measurement"]["rtmr1"]
+    p["predicate"] = pred
+    return json.dumps(p, separators=(",", ":"), sort_keys=True).encode()
+
+
 def mutate_payload_empty_subject(payload: bytes) -> bytes:
     p = json.loads(payload.decode())
     p["subject"] = []
@@ -889,9 +908,67 @@ def main() -> None:
         "  and the fixture starts running there too.\n"
     )
 
+    # 080-083: SPEC §5.5.1 predicate-field validation ----------------------
+    # Companion fixtures to 062. Each mutates one register-bearing field of
+    # the SnpTdxMultiPlatformV1 predicate and re-signs; the DSSE signature
+    # is valid so the rejection is squarely at predicate parsing.
+    write_fixture(
+        fixture_id="080-predicate-missing-snp-measurement",
+        title=(
+            "SnpTdxMultiPlatformV1 predicate without snp_measurement must reject "
+            "with PREDICATE_MEASUREMENT_INVALID."
+        ),
+        spec_refs=["5.5"],
+        notes=(
+            "Symmetric to 062 (which drops rtmr2): drops snp_measurement instead.\n"
+            "SPEC §5.5.1 requires all 3 registers — failure to produce a complete\n"
+            "register set is a parse error, not silent acceptance with fewer\n"
+            "registers."
+        ),
+        spec=FixtureSpec(
+            payload_bytes=mutate_payload_remove_snp_measurement(payload),
+            workflow_repository=DEFAULT_REPO,
+        ),
+        repo=DEFAULT_REPO,
+        policy_override=None,
+        expected_exit=10,
+        rejection_code="PREDICATE_MEASUREMENT_INVALID",
+    )
+
+    write_fixture(
+        fixture_id="081-predicate-missing-tdx-rtmr1",
+        title=(
+            "SnpTdxMultiPlatformV1 predicate without tdx_measurement.rtmr1 must "
+            "reject with PREDICATE_MEASUREMENT_INVALID."
+        ),
+        spec_refs=["5.5"],
+        notes=(
+            "Symmetric to 062: drops rtmr1 instead of rtmr2. Catches an SDK that\n"
+            "only validates presence of rtmr2 (the recon-found bug) or that\n"
+            "treats rtmr1 as optional."
+        ),
+        spec=FixtureSpec(
+            payload_bytes=mutate_payload_remove_rtmr1(payload),
+            workflow_repository=DEFAULT_REPO,
+        ),
+        repo=DEFAULT_REPO,
+        policy_override=None,
+        expected_exit=10,
+        rejection_code="PREDICATE_MEASUREMENT_INVALID",
+    )
+
+    # NOTE on measurement field validation (no fixtures 082/083): SPEC §5.5.1
+    # says "registers[0] = snp_measurement (48 bytes = 96 hex chars)" as a
+    # descriptive note on register width, not as a verification step. None of
+    # the four SDKs validate field length or hex-character contents at the
+    # Sigstore parse stage — they treat the field as an opaque string and rely
+    # on downstream measurement comparison (which would mismatch a malformed
+    # value) to catch the problem. Adding a strict-validation requirement here
+    # would need a SPEC update first.
+
     print("Wrote synthetic fixtures:")
     for d in sorted(VECTORS_DIR.iterdir()):
-        if d.is_dir() and d.name.startswith(("06",)):
+        if d.is_dir() and d.name.startswith(("06", "08")):
             print(f"  {d.relative_to(REPO_ROOT)}")
 
 

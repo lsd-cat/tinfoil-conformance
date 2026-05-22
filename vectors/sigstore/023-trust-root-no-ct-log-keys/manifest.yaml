@@ -1,0 +1,30 @@
+id: 023-trust-root-no-ct-log-keys
+stage: verify-sigstore
+title: |
+  Trust root with no CT log keys must reject — SCT signature can't be verified.
+spec_refs: ["5.1", "5.2"]
+expects:
+  exit_code: 10
+  rejection_code: ["SCT_INSUFFICIENT", "FULCIO_CHAIN_INVALID", "BUNDLE_MALFORMED", "TRUST_ROOT_INVALID"]
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: real-frozen-trust-root-mutation
+notes: |
+  Symmetric to 021 (no Rekor keys) and 022 (no Fulcio CAs): empties
+  the trust root's CT log key list. The signing cert has embedded
+  SCTs, but no key in the trust root can verify their signatures.
+  SPEC §5.2 #4 requires at least 1 valid SCT; with no usable
+  verifier key, no SCT can be deemed valid.
+  
+  Four-way taxonomy split:
+    * tinfoil-rs:  SCT_INSUFFICIENT (precise: zero verifiable SCTs)
+    * tinfoil-js:  BUNDLE_MALFORMED (sigstore-browser treats empty
+                   ctlogs as a structural trust-root error)
+    * tinfoil-py:  TRUST_ROOT_INVALID (sigstore-python rejects
+                   empty ctlogs at TrustedRoot.from_file load time)
+    * tinfoil-go:  BUNDLE_MALFORMED (sigstore-go rejects similarly)
+  All are honest rejections — list-form rejection_code captures
+  the genuine taxonomy divergence.

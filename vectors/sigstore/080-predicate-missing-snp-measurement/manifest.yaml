@@ -1,0 +1,19 @@
+id: 080-predicate-missing-snp-measurement
+stage: verify-sigstore
+title: |
+  SnpTdxMultiPlatformV1 predicate without snp_measurement must reject with PREDICATE_MEASUREMENT_INVALID.
+spec_refs: ["5.5"]
+expects:
+  exit_code: 10
+  rejection_code: "PREDICATE_MEASUREMENT_INVALID"
+required_capabilities:
+  sigstore.trust_root_loading: "configurable"
+  sigstore.verification_time_override: ["supported", "bundle-supplied-only"]
+  sigstore.policy_fields_configurable.workflow_ref_prefix: true
+  sigstore.policy_fields_configurable.predicate_types_allowed: true
+fixture_kind: synthetic
+notes: |
+  Symmetric to 062 (which drops rtmr2): drops snp_measurement instead.
+  SPEC §5.5.1 requires all 3 registers — failure to produce a complete
+  register set is a parse error, not silent acceptance with fewer
+  registers.

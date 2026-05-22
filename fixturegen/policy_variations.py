@@ -384,6 +384,47 @@ def main() -> None:
         expected_outputs=None,
     )
 
+    # 023: trust root with no CT log keys → SCTs can't be verified.
+    no_ctlogs = copy.deepcopy(seed_trust)
+    no_ctlogs["ctlogs"] = []
+    write_fixture(
+        "023-trust-root-no-ct-log-keys",
+        "Trust root with no CT log keys must reject — SCT signature can't be verified.",
+        ["5.1", "5.2"],
+        "real-frozen-trust-root-mutation",
+        notes=(
+            "Symmetric to 021 (no Rekor keys) and 022 (no Fulcio CAs): empties\n"
+            "the trust root's CT log key list. The signing cert has embedded\n"
+            "SCTs, but no key in the trust root can verify their signatures.\n"
+            "SPEC §5.2 #4 requires at least 1 valid SCT; with no usable\n"
+            "verifier key, no SCT can be deemed valid.\n"
+            "\n"
+            "Four-way taxonomy split:\n"
+            "  * tinfoil-rs:  SCT_INSUFFICIENT (precise: zero verifiable SCTs)\n"
+            "  * tinfoil-js:  BUNDLE_MALFORMED (sigstore-browser treats empty\n"
+            "                 ctlogs as a structural trust-root error)\n"
+            "  * tinfoil-py:  TRUST_ROOT_INVALID (sigstore-python rejects\n"
+            "                 empty ctlogs at TrustedRoot.from_file load time)\n"
+            "  * tinfoil-go:  BUNDLE_MALFORMED (sigstore-go rejects similarly)\n"
+            "All are honest rejections — list-form rejection_code captures\n"
+            "the genuine taxonomy divergence."
+        ),
+        seed_input=seed,
+        mutate_input=lambda i: i.update(
+            trust_root_b64=base64.standard_b64encode(
+                json.dumps(no_ctlogs).encode()
+            ).decode()
+        ),
+        expected_exit=10,
+        rejection_code=[
+            "SCT_INSUFFICIENT",
+            "FULCIO_CHAIN_INVALID",
+            "BUNDLE_MALFORMED",
+            "TRUST_ROOT_INVALID",
+        ],
+        expected_outputs=None,
+    )
+
     # 022: trust root with no Fulcio CAs → cert chain can't be verified.
     no_fulcio = copy.deepcopy(seed_trust)
     no_fulcio["certificateAuthorities"] = []
