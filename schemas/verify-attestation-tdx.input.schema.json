@@ -60,6 +60,10 @@
         "expected_fmspc_hex": {
           "type": "string",
           "description": "Optional FMSPC pin. If set, the PCK leaf's FMSPC extension MUST match (rejects with PCK_FMSPC_MISMATCH otherwise)."
+        },
+        "tcb_evaluation_required": {
+          "type": "boolean",
+          "description": "Default true. When false, the verifier skips Intel §4.7 collateral TCB/CRL evaluation (TCB Info match, QE Identity TCB level, PCK revocation, root revocation) and only verifies the cryptographic chain (PCK leaf → intermediate → root, AK binding, quote signature, QE report signature). Used by 'structural happy path' fixtures where the available testdata's collateral is intentionally out-of-sync with the quote's SVNs (e.g. google/go-tdx-guest's testdata, designed to test the TCB-rejection path)."
         }
       }
     }
