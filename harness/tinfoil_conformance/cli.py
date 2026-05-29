@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import runner
+from .divergence import analyze, render_markdown
 from .report import write_markdown, write_results_json
 
 
@@ -66,6 +67,27 @@ def cmd_capabilities(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_divergence(args: argparse.Namespace) -> int:
+    """Analyze a results.json and surface cross-SDK divergences.
+
+    Pure transform — no SDK invocation, no fixture running. Reads
+    `results/latest/results.json` by default; pass `--results` to point at a
+    specific run. Output is markdown (default, paste-into-PR friendly) or
+    machine-readable JSON with `--json`."""
+    results_path = args.results or (Path("results") / "latest" / "results.json")
+    if not results_path.exists():
+        print(f"results.json not found at {results_path}", file=sys.stderr)
+        return 2
+    vectors_root = args.vectors  # may be None — rejection-code allowed-list lookup is best-effort
+    report = analyze(results_path, vectors_root=vectors_root)
+    if args.json:
+        json.dump(report, sys.stdout, indent=2, sort_keys=True, default=str)
+        sys.stdout.write("\n")
+    else:
+        sys.stdout.write(render_markdown(report))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="tinfoil-conformance",
                                 description="Cross-SDK conformance test runner")
@@ -82,6 +104,26 @@ def main(argv: list[str] | None = None) -> int:
     pc = sub.add_parser("capabilities", help="Dump one SDK's capabilities JSON")
     pc.add_argument("--sdk", required=True, metavar="NAME=CMD")
     pc.set_defaults(func=cmd_capabilities)
+
+    pd = sub.add_parser(
+        "divergence",
+        help="Analyze a results.json and surface cross-SDK divergences "
+             "(capability flags, rejection codes, skip causes).",
+    )
+    pd.add_argument(
+        "--results", type=Path, default=None,
+        help="Path to results.json (default: results/latest/results.json).",
+    )
+    pd.add_argument(
+        "--vectors", type=Path, default=Path("vectors"),
+        help="Path to vectors directory — used to look up each fixture's "
+             "allowed rejection_code list. Best-effort; omit if vectors aren't local.",
+    )
+    pd.add_argument(
+        "--json", action="store_true",
+        help="Emit machine-readable JSON instead of markdown.",
+    )
+    pd.set_defaults(func=cmd_divergence)
 
     args = p.parse_args(argv)
     return args.func(args)

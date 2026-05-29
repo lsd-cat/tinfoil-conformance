@@ -76,6 +76,11 @@ def write_results_json(
                         "status": r.status,
                         "got_exit": r.got_exit,
                         "reason": r.reason,
+                        # Body (parsed stdout JSON) is captured so post-hoc
+                        # analyses — divergence reports, regression diffs —
+                        # can read the SDK's actual rejection.code / outputs
+                        # without re-running the suite.
+                        "body": r.got_output,
                     }
                     for name, r in per_sdk.items()
                 },

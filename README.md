@@ -104,6 +104,28 @@ when quoted as a single string.
 cat results/latest/results.md
 ```
 
+### 4) Surface cross-SDK divergences
+
+```bash
+tinfoil-conformance divergence            # markdown, paste-into-PR friendly
+tinfoil-conformance divergence --json     # machine-readable
+```
+
+Auto-generated digest of the three things this suite is designed to
+expose:
+
+* **Capability divergences** — flags where SDKs disagree (false on a
+  single SDK = candidate real gap; multi-way splits = honest lib
+  differences).
+* **Rejection-code divergences** — fixtures where SDKs emit different
+  but each-allowed codes from the manifest's `rejection_code` list.
+  Pure SPEC taxonomy ambiguity.
+* **Skip causes** — per-capability matrix of which SDK skipped which
+  fixture, so the gating pattern is visible at a glance.
+
+Pure transform on `results/latest/results.json` — no SDK invocation, no
+fixture re-running.
+
 ## Adding a new fixture
 
 Each fixture is a directory under `vectors/<stage>/`:
