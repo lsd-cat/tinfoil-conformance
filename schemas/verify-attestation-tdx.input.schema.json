@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinfoil.sh/conformance/schemas/verify-attestation-tdx.input.schema.json",
+  "title": "verify-attestation-tdx input",
+  "description": "Input piped on stdin to `tinfoil-conformance verify-attestation-tdx`. Covers Intel TDX DCAP quote verification (Intel® TDX DCAP §2.3, §A.3/§A.4) and the Tinfoil SPEC §4 layer on top of it. The quote and collateral are passed inline so the SDK does NOT make network calls — the conformance binary wraps any network-fetching Getter with one that returns the injected collateral.",
+  "type": "object",
+  "required": ["schema_version", "quote_b64", "collateral", "expiration_check_date_unix"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1"},
+    "quote_b64": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "description": "Standard base64-encoded raw TDX quote bytes (Quote Format v4 per Intel §A.3, or v5 per §A.4). The SDK parses the header to dispatch on version."
+    },
+    "collateral": {
+      "type": "object",
+      "description": "Quote verification collateral. Mirrors Intel's `tdx_ql_qv_collateral_t` (Appendix Quote Library Data Structures). All fields are required for the canonical verification path; SDKs may declare a capability if they require a subset.",
+      "required": ["tcb_info_json", "qe_identity_json", "pck_crl_der_b64", "root_crl_der_b64"],
+      "additionalProperties": false,
+      "properties": {
+        "tcb_info_json": {
+          "type": "string",
+          "description": "Raw JSON string of Intel PCS TCB Info response (sample API: api.trustedservices.intel.com/tdx/certification/v4/tcb). The outer object is `{tcbInfo: {...}, signature: \"<hex>\"}` — SDKs extract the signature for chain verification and the inner tcbInfo for TCB level evaluation."
+        },
+        "qe_identity_json": {
+          "type": "string",
+          "description": "Raw JSON string of Intel PCS QE Identity response (sample API: api.trustedservices.intel.com/tdx/certification/v4/qe/identity). Outer object is `{enclaveIdentity: {...}, signature: \"<hex>\"}`."
+        },
+        "pck_crl_der_b64": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Standard base64-encoded DER PCK Certificate Revocation List (Intel PCS sample: pckcrl?ca=platform&encoding=der)."
+        },
+        "root_crl_der_b64": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Standard base64-encoded DER Intel SGX Root CA CRL (certificates.trustedservices.intel.com/IntelSGXRootCA.der)."
+        },
+        "intel_root_ca_pem": {
+          "type": "string",
+          "description": "Optional PEM-encoded Intel SGX Root CA certificate. If omitted, SDKs use their embedded copy (most SDKs `go:embed` or bundle it). Override exists for synthetic-root fixtures in later phases."
+        }
+      }
+    },
+    "expiration_check_date_unix": {
+      "type": "integer",
+      "description": "Trusted current time (seconds since epoch) passed as Intel's `expiration_check_date`. Compared to X.509 NotAfter, CRL NextUpdate, and JSON nextUpdate fields. Per Intel §4.1.2 expiration alone does not fail the verification — it only sets `p_collateral_expiration_status`. SDKs surface this through the `collateral_expired` field on the outputs."
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional policy overrides on top of strict Intel verification. Phase 1 leaves this minimal; Phases 3 + 4 will populate.",
+      "properties": {
+        "accepted_qv_results": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Quote verification result enum values acceptable to the relying party (Intel §B.1). Default policy is strict: only `\"OK\"` accepted. Permissive policies for non-terminal results (`SW_HARDENING_NEEDED`, `CONFIG_NEEDED`, `OUT_OF_DATE`, etc.) are exercised in Phase 3."
+        },
+        "expected_fmspc_hex": {
+          "type": "string",
+          "description": "Optional FMSPC pin. If set, the PCK leaf's FMSPC extension MUST match (rejects with PCK_FMSPC_MISMATCH otherwise)."
+        }
+      }
+    }
+  }
+}

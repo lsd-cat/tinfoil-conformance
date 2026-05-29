@@ -24,6 +24,8 @@
       "items": {
         "enum": [
           "verify-sigstore",
+          "verify-attestation-tdx",
+          "verify-hardware-measurements",
           "verify-attestation",
           "verify-measurement",
           "verify-tls-pinning",
@@ -106,6 +108,20 @@
         "compare_multiplatform_to_tdx_supported": {
           "type": "boolean",
           "description": "True if the SDK implements the SPEC §7.3.2 SnpTdxMultiPlatformV1 → TdxGuestV2 comparison (and its §7.3.4 reverse). tinfoil-js's compareMeasurements currently handles only same-type and MP↔SEV; MP↔TDX comparisons throw 'incompatible measurement types' — false until the lib gains the TDX path."
+        }
+      }
+    },
+    "attestation_tdx": {
+      "type": "object",
+      "description": "Capabilities for the verify-attestation-tdx stage (Intel TDX DCAP §4.1, Tinfoil SPEC §4).",
+      "properties": {
+        "supported": {
+          "type": "boolean",
+          "description": "True if the SDK can verify Intel TDX DCAP quotes when the conformance binary injects the collateral (TCB Info, QE Identity, CRLs). Required for any fixture in the attestation-tdx stage to run; SDKs that lack TDX support (e.g., tinfoil-js whose PredicateType enum doesn't include TdxGuestV2) declare false and the fixtures skip cleanly."
+        },
+        "injected_collateral_supported": {
+          "type": "boolean",
+          "description": "True if the SDK's TDX verifier accepts inline collateral (TCB Info JSON, QE Identity JSON, CRLs) instead of fetching from the network. SDKs that hardcode an Intel PCS Getter without an injection point declare false; their fixtures skip until the lib gains a collateral-injection entry point."
         }
       }
     },
