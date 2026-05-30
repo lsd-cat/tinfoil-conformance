@@ -128,6 +128,10 @@
           "enum": ["supported", "system-clock-only"],
           "description": "Where the verifier sources time-of-verification from. 'supported' — uses input.expiration_check_date_unix for cert validity, CRL nextUpdate, JSON nextUpdate. 'system-clock-only' — calls datetime.now() unconditionally; fixtures pinning a verification time outside the real-now range skip cleanly. Mirrors the sigstore capability flag."
         },
+        "tcb_evaluation_supported": {
+          "type": "boolean",
+          "description": "True if the SDK actually runs Intel §4.7 collateral evaluation end-to-end (PCK CRL revocation check, Root CRL check, TCB Info signature + chain + nextUpdate, QE Identity signature + chain + nextUpdate, TCB level comparison). False = the SDK only does structural cryptographic verification (steps 1-5) and rejects policy.tcb_evaluation_required=true with QV_RESULT_TERMINAL_UNSPECIFIED. Phase 2B fixtures targeting collateral-layer rejections gate on this."
+        },
         "policy_fields_supported": {
           "type": "object",
           "description": "Per-field map of which policy.* knobs the SDK consults when verifying. False fields cause fixtures that pin those policy values to skip cleanly.",
